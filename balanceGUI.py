@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk
 
 class BalanceGame:
     def __init__(self, root):
@@ -98,6 +99,20 @@ class BalanceGame:
     def show_statistics(self):
         self.clear_widgets()
         
+        canvas = tk.Canvas(self.root)
+        scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
         total_participants = sum([self.demographics[grade]["total"] for grade in ["1학년", "2학년", "3학년", "4학년"]])
         result_text = f"총 참여 인수: {total_participants}\n\n"
         
@@ -106,10 +121,9 @@ class BalanceGame:
             result_text += f"{grade} (총 {total}명):\n"
             for i, responses in enumerate(self.demographics[grade]["responses"]):
                 if total > 0:
-                    percent = (responses.count(1) / total) * 100
-                    result_text += f"질문 {i + 1}: 선택 1 - {percent:.2f}%\n"
-                    percent = (responses.count(2) / total) * 100
-                    result_text += f"질문 {i + 1}: 선택 2 - {percent:.2f}%\n"
+                    percent1 = (responses.count(1) / total) * 100
+                    percent2 = (responses.count(2) / total) * 100
+                    result_text += f"질문 {i + 1}: 선택 1 - {percent1:.2f}%, 선택 2 - {percent2:.2f}%\n"
             result_text += "\n"
         
         for gender in ["남자", "여자"]:
@@ -117,17 +131,19 @@ class BalanceGame:
             result_text += f"{gender} (총 {total}명):\n"
             for i, responses in enumerate(self.demographics[gender]["responses"]):
                 if total > 0:
-                    percent = (responses.count(1) / total) * 100
-                    result_text += f"질문 {i + 1}: 선택 1 - {percent:.2f}%\n"
-                    percent = (responses.count(2) / total) * 100
-                    result_text += f"질문 {i + 1}: 선택 2 - {percent:.2f}%\n"
+                    percent1 = (responses.count(1) / total) * 100
+                    percent2 = (responses.count(2) / total) * 100
+                    result_text += f"질문 {i + 1}: 선택 1 - {percent1:.2f}%, 선택 2 - {percent2:.2f}%\n"
             result_text += "\n"
-        
-        result_label = tk.Label(self.root, text=result_text, font=("Helvetica", 12), justify=tk.LEFT)
+
+        result_label = tk.Label(scrollable_frame, text=result_text, font=("Helvetica", 12), justify=tk.LEFT)
         result_label.pack(pady=20)
         
-        self.new_session_button = tk.Button(self.root, text="새로운 사용자 시작", command=self.start_new_session)
+        self.new_session_button = tk.Button(scrollable_frame, text="새로운 사용자 시작", command=self.start_new_session)
         self.new_session_button.pack(pady=20)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
     
     def clear_widgets(self):
         for widget in self.root.winfo_children():
